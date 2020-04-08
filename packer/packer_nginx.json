@@ -1,0 +1,46 @@
+{
+    "variables": {
+        "region"        : "eu-west-3",
+        "project"       : "handsOn-packer",
+        "site_dir"      : "site",
+        "scripts_dir"   : "scripts"
+    },
+    "builders": [{
+        "type": "amazon-ebs",
+        "region": "{{user `region`}}",
+        "source_ami_filter": {
+          "filters": {
+          "virtualization-type": "hvm",
+          "name": "ubuntu/images/*ubuntu-xenial-16.04-amd64-server-*",
+          "root-device-type": "ebs"
+            },
+            "owners": ["099720109477"],
+            "most_recent": true
+          },
+        "instance_type": "t2.micro",
+        "ssh_username": "ubuntu",
+        "ssh_timeout": "300s",
+        "ami_name": "{{user `project`}}-{{timestamp}}",
+        "ami_description": "{{user `project`}}",
+        "tags": {
+          "Name": "{{user `project`}}"
+      }
+    }],
+    "provisioners": [
+        {
+            "type": "shell",
+            "script": "{{template_dir}}/{{user `scripts_dir`}}/install_packages.sh",
+            "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'"
+        },
+        {
+            "type": "file",
+            "source": "{{template_dir}}/{{user `site_dir`}}",
+            "destination": "/home/ubuntu"
+        },
+        {
+            "type": "shell",
+            "script": "{{template_dir}}/{{user `scripts_dir`}}/config_site.sh",
+            "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'"
+        }
+    ]
+}
