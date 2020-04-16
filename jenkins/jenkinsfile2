@@ -89,7 +89,8 @@ pipeline {
 					  cd $WORKSPACE/handsonlab/terraform/terraform/vpc
 					  ls -al
 					  /usr/sbin/terraform plan -detailed-exitcode -var-file=terraform.tfvars 
-					  status='echo $?'
+					  status="$?"
+					  echo $status
 					  apply = false
 					  echo "Terraform Plan Exit Code: ${exitCode}"
 					  if (exitCode == "0") {
