@@ -82,13 +82,13 @@ pipeline {
 				secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
 			]])
 				{
-					ssh '''
+					sh '''
 					  env | sort -u
 					  aws sts get-caller-identity
 					  ls -al
 					  cd $WORKSPACE/handsonlab/terraform/terraform/vpc
 					  ls -al
-					  /usr/sbin/terraform plan -detailed-exitcode -var-file=terraform.tfvarsecho 
+					  /usr/sbin/terraform plan -detailed-exitcode -var-file=terraform.tfvars 
 					  status='echo $?'
 					  apply = false
 					  echo "Terraform Plan Exit Code: ${exitCode}"
