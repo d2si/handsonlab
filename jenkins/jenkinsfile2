@@ -86,7 +86,7 @@ pipeline {
             {
                 script{
                   sh "env | sort -u"
-                  sh "aws sts get-caller-identity
+                  sh "aws sts get-caller-identity"
                   sh "ls -al"
                   sh "cd $WORKSPACE/handsonlab/terraform/terraform/vpc; /usr/sbin/terraform plan -detailed-exitcode -var-file=terraform.tfvars;echo \$? >status"
                   def exitCode = readFile('status').trim()
