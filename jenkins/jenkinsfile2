@@ -112,8 +112,7 @@ pipeline {
                   }
                 }
            }
-    }
-    stage('Terraform  Apply VPC') {
+     stage('Terraform  Apply VPC') {
         steps {
         withCredentials([[
             $class: 'AmazonWebServicesCredentialsBinding',
