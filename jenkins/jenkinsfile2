@@ -89,7 +89,8 @@ pipeline {
 					  ls -al 
 					  status="0"
 					  echo $status
-					  apply = false
+					  apply=false
+					  echo $apply
 					  echo "Terraform Plan Exit Code: ${exitCode}"
 					  if (exitCode == "0") {
 						  currentBuild.result = 'SUCCESS'
