@@ -20,7 +20,7 @@ pipeline {
       }
     }  
      
-    stage(‘PackerValidate’) {
+    stage('Packer Validate') {
         steps {
         withCredentials([[
             $class: 'AmazonWebServicesCredentialsBinding',
@@ -39,7 +39,7 @@ pipeline {
         }
     }
 
-    stage(‘Packer Build) {
+    stage('Packer Build') {
         steps {
         withCredentials([[
             $class: 'AmazonWebServicesCredentialsBinding',
