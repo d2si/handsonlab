@@ -16,6 +16,13 @@ variable "instance_type" {
     description = ""
 }
 
+variable "vpc_id" {
+  type = string
+  default = ""
+  description = ""
+  }
+
+
 /*
 variable "" {
     type        = string
