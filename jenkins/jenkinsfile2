@@ -1,0 +1,115 @@
+pipeline {
+  agent any
+  stages {
+    stage('Checkout') {
+        steps {
+        withCredentials([[
+            $class: 'AmazonWebServicesCredentialsBinding',
+            credentialsId: 'fd4fa4b1-1e70-43de-b796-e13753ecd881',
+            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+        ]]){
+                sh '''
+                   env | sort -u
+                   aws sts get-caller-identity
+                   /usr/bin/packer -machine-readable version
+                   if [ -d "handsonlab" ]; then rm -Rf handsonlab; fi
+                   git clone https://github.com/d2si/handsonlab.git
+                '''
+        }
+      }
+    }  
+     
+    stage(‘Packer Validate’) {
+        steps {
+        withCredentials([[
+            $class: 'AmazonWebServicesCredentialsBinding',
+            credentialsId: 'fd4fa4b1-1e70-43de-b796-e13753ecd881',
+            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+        ]])
+            {
+                sh '''
+                   env | sort -u
+                   aws sts get-caller-identity
+                   cd $WORKSPACE/handsonlab/packer
+                   /usr/bin/packer validate packer_nginx.json
+                '''
+            }
+        }
+    }
+
+    stage(‘Packer Build') {
+        steps {
+        withCredentials([[
+            $class: 'AmazonWebServicesCredentialsBinding',
+            credentialsId: 'fd4fa4b1-1e70-43de-b796-e13753ecd881',
+            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+        ]])
+            {
+                sh '''
+                   env | sort -u
+                   aws sts get-caller-identity
+                   cd $WORKSPACE/handsonlab/packer
+                '''
+            }
+        }
+    }
+    stage(‘Terraform Init') {
+        steps {
+        withCredentials([[
+            $class: 'AmazonWebServicesCredentialsBinding',
+            credentialsId: 'fd4fa4b1-1e70-43de-b796-e13753ecd881',
+            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+        ]])
+            {
+                sh '''
+                   env | sort -u
+                   aws sts get-caller-identity
+                   /usr/bin/terraform --version
+				   /usr/bin/terraform init
+                '''
+            }
+        }
+    }
+    stage(‘Terraform Plan') {
+        steps {
+        withCredentials([[
+            $class: 'AmazonWebServicesCredentialsBinding',
+            credentialsId: 'fd4fa4b1-1e70-43de-b796-e13753ecd881',
+            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+        ]])
+            {
+                sh '''
+                   env | sort -u
+                   aws sts get-caller-identity
+				   if (fileExists("status"));then rm status"; fi
+                '''
+				sh "set +e; terraform plan -out=plan.out -detailed-exitcode; echo \$? &gt; status"
+            def exitCode = readFile('status').trim()
+            def apply = false
+            echo "Terraform Plan Exit Code: ${exitCode}"
+            if (exitCode == "0") {
+                currentBuild.result = 'SUCCESS'
+            }
+            if (exitCode == "1") {
+                currentBuild.result = 'FAILURE'
+            }
+            if (exitCode == "2") {
+                stash name: "plan", includes: "plan.out"
+                try {
+                    input message: 'Apply Plan?', ok: 'Apply'
+                    apply = true
+                } catch (err) {
+                    apply = false
+                    currentBuild.result = 'UNSTABLE'
+                }
+            }
+            }
+        }
+    }
+  }
+}
