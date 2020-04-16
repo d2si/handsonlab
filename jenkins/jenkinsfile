@@ -1,12 +1,7 @@
-#!/usr/bin/env groovy
-agent any parameters {
-        string(defaultValue: "TEST", description: 'What environment?', name: 'userFlag')
-        choice(choices: ['US-EAST-1', 'US-WEST-2'], description: 'What AWS region?', name: 'region')
-    }
-node {
-stage('Execute shell') {
-var = "name"
-sh "echo Environment ${params.userFlag}"
-sh "echo Region ${params.region}"
 }
+properties([parameters([string(defaultValue: 'Test', description: 'What environment you will to deploy ?', name: 'userFlag')][choice(choices:  ['US-EAST-1', 'US-WEST-2'], description: 'What AWS region ?', name: 'region')])])
+
+node {
+    echo "${params.userFlag}"
+    echo "${params.region}"    
 }
