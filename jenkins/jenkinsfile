@@ -6,6 +6,7 @@ node {
     }
 stage('Execute shell') {
 var = "name"
-sh "echo Hello ${userFlag}"
+sh "echo Environment ${params.userFlag}"
+sh "echo Region ${params.region}"
 }
 }
