@@ -13,8 +13,7 @@ pipeline {
                    env | sort -u
                    aws sts get-caller-identity
                    /usr/bin/packer -machine-readable version
-                   ls -l
-                   rm -r handsonlab
+                   if [ -d "handsonlab" ]; then rm -Rf handsonlab; fi
                    git clone https://github.com/d2si/handsonlab.git
                 '''
         }
