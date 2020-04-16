@@ -85,11 +85,9 @@ pipeline {
 					sh '''
 					  env | sort -u
 					  aws sts get-caller-identity
-					  ls -al
 					  cd $WORKSPACE/handsonlab/terraform/terraform/vpc
-					  ls -al
-					  /usr/sbin/terraform plan -detailed-exitcode -var-file=terraform.tfvars 
-					  status="$?"
+					  ls -al 
+					  status="0"
 					  echo $status
 					  apply = false
 					  echo "Terraform Plan Exit Code: ${exitCode}"
