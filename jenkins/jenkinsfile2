@@ -56,7 +56,7 @@ pipeline {
             }
         }
     }
-   stage('Terraform  Init') {
+   stage('Terraform  Init VPC') {
         steps {
         withCredentials([[
             $class: 'AmazonWebServicesCredentialsBinding',
@@ -68,15 +68,14 @@ pipeline {
                 sh '''
                    env | sort -u
                    aws sts get-caller-identity
-                   cd $WORKSPACE/handsonlab/terraform
+                   cd $WORKSPACE/handsonlab/terraform/vpc
                    /usr/sbin/terraform --version
-                   cd $WORKSPACE/handsonlab/terraform
                    /usr/sbin/terraform init
                 '''
             }
         }
     } 
-    stage('Terraform  Plan') {
+    stage('Terraform  Plan VPC') {
         steps {
         withCredentials([[
             $class: 'AmazonWebServicesCredentialsBinding',
@@ -88,8 +87,8 @@ pipeline {
                 sh '''
                    env | sort -u
                    aws sts get-caller-identity
-                   cd $WORKSPACE/handsonlab/terraform
-                   /usr/sbin/terraform plan -detailed-exicode
+                   cd $WORKSPACE/handsonlab/terraform/vpc
+                   /usr/sbin/terraform plan -detailed-exitcode
                    echo \$? > status
                 '''
                 script{
