@@ -18,12 +18,6 @@ data "aws_vpc" "vpc" {
   id = var.vpc_id
 }
 
-variable "vpc_id" {
-  type = string
-  default = ""
-  description = ""
-  }
-
 resource "aws_security_group" "allow_traffic" {
   name        = "terraform-sg-webapp"
   description = "Allow inbound traffic"
