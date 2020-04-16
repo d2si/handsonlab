@@ -68,7 +68,7 @@ pipeline {
                 sh '''
                    env | sort -u
                    aws sts get-caller-identity
-                   cd $WORKSPACE/handsonlab/terraform/vpc
+                   cd $WORKSPACE/handsonlab/terraform/terraform/vpc
                    /usr/sbin/terraform --version
                    /usr/sbin/terraform init
                 '''
@@ -87,7 +87,7 @@ pipeline {
                 sh '''
                    env | sort -u
                    aws sts get-caller-identity
-                   cd $WORKSPACE/handsonlab/terraform/vpc
+                   cd $WORKSPACE/handsonlab/terraform/terraform/vpc
                    /usr/sbin/terraform plan -detailed-exitcode
                    echo \$? > status
                 '''
