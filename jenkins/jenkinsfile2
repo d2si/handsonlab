@@ -92,8 +92,8 @@ pipeline {
 					  apply=false
 					  echo $apply
 					  echo Terraform Plan Exit Code: $exitCode
-					  if (exitCode=="0");then currentBuild.result='SUCCESS'; fi
-					  if (exitCode=="1");then urrentBuild.result='FAILURE'; fi
+					  if (exitCode=="0");then currentBuild.result=SUCCESS; fi
+					  if (exitCode=="1");then currentBuild.result='FAILURE'; fi
 					  if (exitCode=="2");then try {
 							  input message: 'Apply Plan?', ok: 'Apply'
 							  apply = true
