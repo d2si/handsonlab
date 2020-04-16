@@ -15,7 +15,7 @@ pipeline {
                    /usr/bin/packer -machine-readable version
                    ls -l
                    rm -r handsonlab
-                   git clone https://github.com/d2si/handsonlab.git && cd handsonlab/packer/
+                   git clone https://github.com/d2si/handsonlab.git
                 '''
         }
       }
