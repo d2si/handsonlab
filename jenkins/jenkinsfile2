@@ -112,7 +112,25 @@ pipeline {
                   }
                 }
            }
-    }       
+    }
+    stage('Terraform  Apply VPC') {
+        steps {
+        withCredentials([[
+            $class: 'AmazonWebServicesCredentialsBinding',
+            credentialsId: 'fd4fa4b1-1e70-43de-b796-e13753ecd881',
+            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+        ]])
+            {
+                sh '''
+                   env | sort -u
+                   aws sts get-caller-identity
+                   cd $WORKSPACE/handsonlab/terraform/terraform/vpc
+                   /usr/sbin/terraform --version
+                   /usr/sbin/terraform apply -detailed-exitcode -var-file=terraform.tfvars
+                '''
+           }
+           }
   }
 }
 }
