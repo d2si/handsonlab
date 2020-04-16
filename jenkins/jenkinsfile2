@@ -69,9 +69,9 @@ pipeline {
                    env | sort -u
                    aws sts get-caller-identity
                    cd $WORKSPACE/handsonlab/terraform
-                   /usr/bin/terraform/terraform --version
+                   /usr/sbin/terraform --version
                    cd $WORKSPACE/handsonlab/terraform
-                   /usr/bin/terraform/terraform init
+                   /usr/sbin/terraform init
                 '''
             }
         }
@@ -89,7 +89,7 @@ pipeline {
                    env | sort -u
                    aws sts get-caller-identity
                    cd $WORKSPACE/handsonlab/terraform
-                   /usr/bin/terraform/terraform plan -detailed-exicode
+                   /usr/sbin/terraform plan -detailed-exicode
                    echo \$? > status
                 '''
                 script{
