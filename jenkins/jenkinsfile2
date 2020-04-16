@@ -87,14 +87,14 @@ pipeline {
 					  aws sts get-caller-identity
 					  cd $WORKSPACE/handsonlab/terraform/terraform/vpc
 					  ls -al 
-					  status="0"
-					  echo $status
+					  exitCode="0"
+					  echo $exitCode
 					  apply=false
 					  echo $apply
 					  echo Terraform Plan Exit Code: $exitCode
-					  if (exitCode == "0");then currentBuild.result='SUCCESS'; fi
-					  if (exitCode == "1");then urrentBuild.result='FAILURE'; fi
-					  if (exitCode == "2");then try {
+					  if (exitCode=="0");then currentBuild.result='SUCCESS'; fi
+					  if (exitCode=="1");then urrentBuild.result='FAILURE'; fi
+					  if (exitCode=="2");then try {
 							  input message: 'Apply Plan?', ok: 'Apply'
 							  apply = true
 							   } catch (err) {
