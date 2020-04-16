@@ -89,7 +89,7 @@ pipeline {
                    aws sts get-caller-identity
                    cd $WORKSPACE/handsonlab/terraform/terraform/vpc
                    /usr/sbin/terraform plan -detailed-exitcode
-                   echo \$? >> status
+                   echo $? > status
                    cat status
                 '''
                 script{
