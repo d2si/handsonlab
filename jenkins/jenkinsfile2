@@ -112,7 +112,8 @@ pipeline {
                   }
                 }
            }
-     stage('Terraform  Apply VPC') {
+    } 
+    stage('Terraform Apply VPC') {
         steps {
         withCredentials([[
             $class: 'AmazonWebServicesCredentialsBinding',
@@ -129,9 +130,7 @@ pipeline {
                    /usr/sbin/terraform apply -detailed-exitcode -var-file=terraform.tfvars
                 '''
            }
-           }
+    } 	
   }
-}
-}
 }
 }
