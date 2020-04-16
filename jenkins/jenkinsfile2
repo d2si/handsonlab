@@ -91,17 +91,10 @@ pipeline {
 					  echo $status
 					  apply=false
 					  echo $apply
-					  echo "Terraform Plan Exit Code: $exitCode"
-					  if (exitCode == "0") {
-						  currentBuild.result = 'SUCCESS'
-					  }
-					  if (exitCode == "1") {
-						  echo "Plan Failed: ${env.JOB_NAME} - ${env.BUILD_NUMBER} ()"
-						  currentBuild.result = 'FAILURE'
-					  }
-					  if (exitCode == "2") {
-						  echo "Plan Awaiting Approval: ${env.JOB_NAME} - ${env.BUILD_NUMBER} ()"
-						  try {
+					  echo Terraform Plan Exit Code: $exitCode
+					  if (exitCode == "0");then currentBuild.result='SUCCESS'; fi
+					  if (exitCode == "1");then urrentBuild.result='FAILURE'; fi
+					  if (exitCode == "2");then try {
 							  input message: 'Apply Plan?', ok: 'Apply'
 							  apply = true
 							   } catch (err) {
