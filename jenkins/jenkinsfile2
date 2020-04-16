@@ -82,14 +82,16 @@ pipeline {
 				secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
 			]])
 				{
-					script{
-					  sh "env | sort -u"
-					  sh "aws sts get-caller-identity"
-					  sh "ls -al"
-					  sh "export TF_IN_AUTOMATION=1; cd $WORKSPACE/handsonlab/terraform/terraform/vpc; ls -al;/usr/sbin/terraform plan -compact-warnings -detailed-exitcode -var-file=terraform.tfvars; echo \$? >/tmp/status;"
-					  echo "toto"
-					  def exitCode = readFile('/tmp/status').trim()
-					  def apply = false
+					sh '''
+					  env | sort -u
+					  aws sts get-caller-identity
+					  ls -al
+					  export TF_IN_AUTOMATION=1
+					  cd $WORKSPACE/handsonlab/terraform/terraform/vpc
+					  ls -al
+					  /usr/sbin/terraform plan -compact-warnings -detailed-exitcode -var-file=terraform.tfvars
+					  status='echo \$?'
+					  apply = false
 					  echo "Terraform Plan Exit Code: ${exitCode}"
 					  if (exitCode == "0") {
 						  currentBuild.result = 'SUCCESS'
