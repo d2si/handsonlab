@@ -20,7 +20,7 @@ pipeline {
       }
     }  
      
-    stage(‘Packer Validate’) {
+    stage(‘Packer validate’) {
         steps {
         withCredentials([[
             $class: 'AmazonWebServicesCredentialsBinding',
@@ -69,7 +69,7 @@ pipeline {
                    env | sort -u
                    aws sts get-caller-identity
                    /usr/bin/terraform --version
-				   /usr/bin/terraform init
+		   /usr/bin/terraform init
                 '''
             }
         }
