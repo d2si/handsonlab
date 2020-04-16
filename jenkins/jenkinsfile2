@@ -88,7 +88,7 @@ pipeline {
                    env | sort -u
                    aws sts get-caller-identity
                    cd $WORKSPACE/handsonlab/terraform/terraform/vpc
-                   /usr/sbin/terraform plan -detailed-exitcode
+                   /usr/sbin/terraform plan -detailed-exitcode -var-file=terraform.tfvars
                    echo $? > status
                    cat status
                 '''
