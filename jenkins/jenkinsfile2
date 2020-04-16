@@ -1,7 +1,7 @@
 pipeline {
   agent any
   stages {
-    stage('Checkout') {
+    stage('Checkout code repo') {
         steps {
         withCredentials([[
             $class: 'AmazonWebServicesCredentialsBinding',
@@ -56,5 +56,24 @@ pipeline {
             }
         }
     }
+   stage('Terraform  Init') {
+        steps {
+        withCredentials([[
+            $class: 'AmazonWebServicesCredentialsBinding',
+            credentialsId: 'fd4fa4b1-1e70-43de-b796-e13753ecd881',
+            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+        ]])
+            {
+                sh '''
+                   env | sort -u
+                   aws sts get-caller-identity
+                   cd $WORKSPACE/handsonlab/terraform
+                   terraform --version
+                   terraform init
+                '''
+            }
+        }
+    }    
   }
 }
