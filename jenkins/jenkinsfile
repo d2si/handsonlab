@@ -1,9 +1,62 @@
-    node {
-        def deployOptions = 'no\nyes'
-        def userInput = input(
-          id: 'userInput', message: 'Are you prepared to deploy?', parameters: [
-          [$class: 'ChoiceParameterDefinition', choices: deployOptions, description: 'Approve/Disallow deployment', name: 'deploy-check']
-          ]
-        )
-        echo "you selected: ${userInput}"
+pipeline {
+  agent any
+  stages {
+    stage('Create Packer AMI') {
+        steps {
+        withCredentials([[
+            $class: 'AmazonWebServicesCredentialsBinding',
+            credentialsId: 'fd4fa4b1-1e70-43de-b796-e13753ecd881',
+            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+        ]]){
+                sh '''
+                   env | sort -u
+                   aws sts get-caller-identity
+                   /usr/bin/packer -machine-readable version
+                   ls -l
+                   rm -r handsonlab
+                   git clone https://github.com/d2si/handsonlab.git && cd handsonlab/packer/
+                '''
+        }
+      }
+    }  
+     
+    stage(‘Validate’) {
+        steps {
+        withCredentials([[
+            $class: 'AmazonWebServicesCredentialsBinding',
+            credentialsId: 'fd4fa4b1-1e70-43de-b796-e13753ecd881',
+            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+        ]])
+            {
+                sh '''
+                   env | sort -u
+                   aws sts get-caller-identity
+                   cd $WORKSPACE/handsonlab/packer
+                   /usr/bin/packer validate packer_nginx.json
+                '''
+            }
+        }
     }
+
+    stage(‘Build) {
+        steps {
+        withCredentials([[
+            $class: 'AmazonWebServicesCredentialsBinding',
+            credentialsId: 'fd4fa4b1-1e70-43de-b796-e13753ecd881',
+            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+        ]])
+            {
+                sh '''
+                   env | sort -u
+                   aws sts get-caller-identity
+                   cd $WORKSPACE/handsonlab/packer
+                   /usr/bin/packer build packer_nginx.json
+                '''
+            }
+        }
+    }
+  }
+}
