@@ -1,7 +1,11 @@
 #!/usr/bin/env groovy
 node {
+    parameters {
+        string(defaultValue: "TEST", description: 'What environment?', name: 'userFlag')
+        choice(choices: ['US-EAST-1', 'US-WEST-2'], description: 'What AWS region?', name: 'region')
+    }
 stage('Execute shell') {
 var = "name"
-sh "echo Hello ${var}"
+sh "echo Hello ${userFlag}"
 }
 }
