@@ -92,29 +92,30 @@ pipeline {
                    /usr/bin/terraform/terraform plan -detailed-exicode
                    echo \$? > status
                 '''
-                    def exitCode = readFile('status').trim()
-                def apply = false
-                echo "Terraform Plan Exit Code: ${exitCode}"
-                if (exitCode == "0") {
-                  currentBuild.result = 'SUCCESS'
+                script{
+                  def exitCode = readFile('status').trim()
+                  def apply = false
+                  echo "Terraform Plan Exit Code: ${exitCode}"
+                  if (exitCode == "0") {
+                      currentBuild.result = 'SUCCESS'
+                  }
+                  if (exitCode == "1") {
+                      echo "Plan Failed: ${env.JOB_NAME} - ${env.BUILD_NUMBER} ()"
+                      currentBuild.result = 'FAILURE'
+                  }
+                  if (exitCode == "2") {
+                      echo "Plan Awaiting Approval: ${env.JOB_NAME} - ${env.BUILD_NUMBER} ()"
+                      try {
+                          input message: 'Apply Plan?', ok: 'Apply'
+                          apply = true
+                           } catch (err) {
+                              echo "Plan Discarded: ${env.JOB_NAME} - ${env.BUILD_NUMBER} ()"
+                              apply = false
+                              currentBuild.result = 'UNSTABLE'
+                          }
+                  }
                 }
-                if (exitCode == "1") {
-                  echo "Plan Failed: ${env.JOB_NAME} - ${env.BUILD_NUMBER} ()"
-                  currentBuild.result = 'FAILURE'
-               }
-               if (exitCode == "2") {
-                 echo "Plan Awaiting Approval: ${env.JOB_NAME} - ${env.BUILD_NUMBER} ()"
-                 try {
-                    input message: 'Apply Plan?', ok: 'Apply'
-                    apply = true
-                   } catch (err) {
-                    echo "Plan Discarded: ${env.JOB_NAME} - ${env.BUILD_NUMBER} ()"
-                    apply = false
-                    currentBuild.result = 'UNSTABLE'
-                }
-            }
-            }
-        }
+           }
     }       
   }
 }
