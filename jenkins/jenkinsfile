@@ -1,4 +1,3 @@
-}
 properties([parameters([string(defaultValue: 'Test', description: 'What environment you will to deploy ?', name: 'userFlag')][choice(choices:  ['US-EAST-1', 'US-WEST-2'], description: 'What AWS region ?', name: 'region')])])
 
 node {
