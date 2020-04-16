@@ -69,8 +69,8 @@ pipeline {
                    env | sort -u
                    aws sts get-caller-identity
                    cd $WORKSPACE/handsonlab/terraform
-                   /usr/bin/terraform --version
-                   /usr/bin/terraform init
+                   /usr/bin/terraform/terraform --version
+                   /usr/bin/terraform/terraform init
                 '''
             }
         }
