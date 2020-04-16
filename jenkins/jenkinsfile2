@@ -1,136 +1,133 @@
 pipeline {
-  agent any
-  stages {
-    stage('Checkout code repo') {
-        steps {
-        withCredentials([[
-            $class: 'AmazonWebServicesCredentialsBinding',
-            credentialsId: 'fd4fa4b1-1e70-43de-b796-e13753ecd881',
-            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-        ]]){
-                sh '''
-                   env | sort -u
-                   aws sts get-caller-identity
-                   /usr/bin/packer -machine-readable version
-                   if [ -d "handsonlab" ]; then rm -Rf handsonlab; fi
-                   git clone https://github.com/d2si/handsonlab.git
-                '''
-        }
-      }
-    }  
-     
-    stage('Packer Validate') {
-        steps {
-        withCredentials([[
-            $class: 'AmazonWebServicesCredentialsBinding',
-            credentialsId: 'fd4fa4b1-1e70-43de-b796-e13753ecd881',
-            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-        ]])
-            {
-                sh '''
-                   env | sort -u
-                   aws sts get-caller-identity
-                   cd $WORKSPACE/handsonlab/packer
-                   /usr/bin/packer validate packer_nginx.json
-                '''
-            }
-        }
-    }
-
-    stage('Packer Build') {
-        steps {
-        withCredentials([[
-            $class: 'AmazonWebServicesCredentialsBinding',
-            credentialsId: 'fd4fa4b1-1e70-43de-b796-e13753ecd881',
-            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-        ]])
-            {
-                sh '''
-                   env | sort -u
-                   aws sts get-caller-identity
-                   cd $WORKSPACE/handsonlab/packer
-                '''
-            }
-        }
-    }
-   stage('Terraform  Init VPC') {
-        steps {
-        withCredentials([[
-            $class: 'AmazonWebServicesCredentialsBinding',
-            credentialsId: 'fd4fa4b1-1e70-43de-b796-e13753ecd881',
-            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-        ]])
-            {
-                sh '''
-                   env | sort -u
-                   aws sts get-caller-identity
-                   cd $WORKSPACE/handsonlab/terraform/terraform/vpc
-                   /usr/sbin/terraform --version
-                   /usr/sbin/terraform init
-                '''
-            }
-        }
-    } 
-    stage('Terraform  Plan VPC') {
-        steps {
-        withCredentials([[
-            $class: 'AmazonWebServicesCredentialsBinding',
-            credentialsId: 'fd4fa4b1-1e70-43de-b796-e13753ecd881',
-            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-        ]])
-            {
-                script{
-                  sh "env | sort -u"
-                  sh "aws sts get-caller-identity"
-                  sh "ls -al"
-                  sh "cd $WORKSPACE/handsonlab/terraform/terraform/vpc; ls -al;/usr/sbin/terraform plan -detailed-exitcode -var-file=terraform.tfvars;echo \$? >status"
-                  def exitCode = readFile('status').trim()
-                  def apply = false
-                  echo "Terraform Plan Exit Code: ${exitCode}"
-                  if (exitCode == "0") {
-                      currentBuild.result = 'SUCCESS'
-                  }
-                  if (exitCode == "1") {
-                      echo "Plan Failed: ${env.JOB_NAME} - ${env.BUILD_NUMBER} ()"
-                      currentBuild.result = 'FAILURE'
-                  }
-                  if (exitCode == "2") {
-                      echo "Plan Awaiting Approval: ${env.JOB_NAME} - ${env.BUILD_NUMBER} ()"
-                      try {
-                          input message: 'Apply Plan?', ok: 'Apply'
-                          apply = true
-                           } catch (err) {
-                              echo "Plan Discarded: ${env.JOB_NAME} - ${env.BUILD_NUMBER} ()"
-                              apply = false
-                              currentBuild.result = 'UNSTABLE'
-                          }
-                  }
-                }
-           }
-    } 
-    stage('Terraform Apply VPC') {
-        steps {
-        withCredentials([[
-            $class: 'AmazonWebServicesCredentialsBinding',
-            credentialsId: 'fd4fa4b1-1e70-43de-b796-e13753ecd881',
-            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-        ]])
-            {
-                sh '''
-                   env | sort -u
-                   aws sts get-caller-identity
-                   cd $WORKSPACE/handsonlab/terraform/terraform/vpc
-                   /usr/sbin/terraform --version
-                   /usr/sbin/terraform apply -detailed-exitcode -var-file=terraform.tfvars
-                '''
-           }
-    } 	
-  }
-}
+	agent any
+	stages {
+		stage('Checkout code repo') {
+			steps {
+			withCredentials([[
+				$class: 'AmazonWebServicesCredentialsBinding',
+				credentialsId: 'fd4fa4b1-1e70-43de-b796-e13753ecd881',
+				accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+				secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+			]]){
+					sh '''
+					   env | sort -u
+					   aws sts get-caller-identity
+					   /usr/bin/packer -machine-readable version
+					   if [ -d "handsonlab" ]; then rm -Rf handsonlab; fi
+					   git clone https://github.com/d2si/handsonlab.git
+					'''
+			}
+		  }
+		} 
+		stage('Packer Validate') {
+			steps {
+			withCredentials([[
+				$class: 'AmazonWebServicesCredentialsBinding',
+				credentialsId: 'fd4fa4b1-1e70-43de-b796-e13753ecd881',
+				accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+				secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+			]])
+				{
+					sh '''
+					   env | sort -u
+					   aws sts get-caller-identity
+					   cd $WORKSPACE/handsonlab/packer
+					   /usr/bin/packer validate packer_nginx.json
+					'''
+				}
+			}
+		}
+		stage('Packer Build') {
+			steps {
+			withCredentials([[
+				$class: 'AmazonWebServicesCredentialsBinding',
+				credentialsId: 'fd4fa4b1-1e70-43de-b796-e13753ecd881',
+				accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+				secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+			]])
+				{
+					sh '''
+					   env | sort -u
+					   aws sts get-caller-identity
+					   cd $WORKSPACE/handsonlab/packer
+					'''
+				}
+			}
+		}
+		stage('Terraform  Init VPC') {
+			steps {
+			withCredentials([[
+				$class: 'AmazonWebServicesCredentialsBinding',
+				credentialsId: 'fd4fa4b1-1e70-43de-b796-e13753ecd881',
+				accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+				secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+			]])
+				{
+					sh '''
+					   env | sort -u
+					   aws sts get-caller-identity
+					   cd $WORKSPACE/handsonlab/terraform/terraform/vpc
+					   /usr/sbin/terraform --version
+					   /usr/sbin/terraform init
+					'''
+				}
+			}
+		} 
+		stage('Terraform  Plan VPC') {
+			steps {
+			withCredentials([[
+				$class: 'AmazonWebServicesCredentialsBinding',
+				credentialsId: 'fd4fa4b1-1e70-43de-b796-e13753ecd881',
+				accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+				secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+			]])
+				{
+					script{
+					  sh "env | sort -u"
+					  sh "aws sts get-caller-identity"
+					  sh "ls -al"
+					  sh "cd $WORKSPACE/handsonlab/terraform/terraform/vpc; ls -al;/usr/sbin/terraform plan -detailed-exitcode -var-file=terraform.tfvars;echo \$? >status"
+					  def exitCode = readFile('status').trim()
+					  def apply = false
+					  echo "Terraform Plan Exit Code: ${exitCode}"
+					  if (exitCode == "0") {
+						  currentBuild.result = 'SUCCESS'
+					  }
+					  if (exitCode == "1") {
+						  echo "Plan Failed: ${env.JOB_NAME} - ${env.BUILD_NUMBER} ()"
+						  currentBuild.result = 'FAILURE'
+					  }
+					  if (exitCode == "2") {
+						  echo "Plan Awaiting Approval: ${env.JOB_NAME} - ${env.BUILD_NUMBER} ()"
+						  try {
+							  input message: 'Apply Plan?', ok: 'Apply'
+							  apply = true
+							   } catch (err) {
+								  echo "Plan Discarded: ${env.JOB_NAME} - ${env.BUILD_NUMBER} ()"
+								  apply = false
+								  currentBuild.result = 'UNSTABLE'
+							  }
+					  }
+					}
+			   }
+		} 
+		stage('Terraform Apply VPC') {
+			steps {
+			withCredentials([[
+				$class: 'AmazonWebServicesCredentialsBinding',
+				credentialsId: 'fd4fa4b1-1e70-43de-b796-e13753ecd881',
+				accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+				secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+			]])
+				{
+					sh '''
+					   env | sort -u
+					   aws sts get-caller-identity
+					   cd $WORKSPACE/handsonlab/terraform/terraform/vpc
+					   /usr/sbin/terraform --version
+					   /usr/sbin/terraform apply -detailed-exitcode -var-file=terraform.tfvars
+					'''
+			   }
+		} 	
+	}
 }
