@@ -20,7 +20,7 @@ pipeline {
       }
     }      
     stage(‘Packervalidate’) {
-        steps {
+    	steps {
         withCredentials([[
             $class: 'AmazonWebServicesCredentialsBinding',
             credentialsId: 'fd4fa4b1-1e70-43de-b796-e13753ecd881',
@@ -38,7 +38,7 @@ pipeline {
         }
     }
     stage(‘Packer Build') {
-        steps {
+    steps {
         withCredentials([[
             $class: 'AmazonWebServicesCredentialsBinding',
             credentialsId: 'fd4fa4b1-1e70-43de-b796-e13753ecd881',
