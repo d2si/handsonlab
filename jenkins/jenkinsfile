@@ -1,6 +1,9 @@
-properties([parameters([string(defaultValue: 'Test', description: 'What environment you will to deploy ?', name: 'userFlag')][choice(choices:  ['US-EAST-1', 'US-WEST-2'], description: 'What AWS region ?', name: 'region')])])
-
-node {
-    echo "${params.userFlag}"
-    echo "${params.region}"    
-}
+    node {
+        def deployOptions = 'no\nyes'
+        def userInput = input(
+          id: 'userInput', message: 'Are you prepared to deploy?', parameters: [
+          [$class: 'ChoiceParameterDefinition', choices: deployOptions, description: 'Approve/Disallow deployment', name: 'deploy-check']
+          ]
+        )
+        echo "you selected: ${userInput}"
+    }
