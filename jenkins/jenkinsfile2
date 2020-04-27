@@ -66,7 +66,7 @@ pipeline {
 					sh '''
 					   env | sort -u
 					   aws sts get-caller-identity
-					   cd $WORKSPACE/handsonlab/terraform/terraform/vpc
+					   cd $WORKSPACE/handsonlab/terraform/infra/vpc
 					   /usr/sbin/terraform --version
 					   /usr/sbin/terraform init
 					'''
@@ -75,39 +75,26 @@ pipeline {
 		} 
 		stage('Terraform Plan VPC') {
 			steps {
-			withCredentials([[
-				$class: 'AmazonWebServicesCredentialsBinding',
-				credentialsId: 'fd4fa4b1-1e70-43de-b796-e13753ecd881',
-				accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-				secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-			]])
-				{
-					sh '''
-					  env | sort -u
-					  aws sts get-caller-identity
-					  cd $WORKSPACE/handsonlab/terraform/terraform/vpc
-					  ls -al 
-					  exitCode="0"
-					  echo $exitCode
-					  apply=false
-					  echo $apply
-					  echo Terraform Plan Exit Code: $exitCode
-					  if (exitCode=="0");then currentBuild.result=SUCCESS; fi
-					  if (exitCode=="1");then currentBuild.result='FAILURE'; fi
-					  if (exitCode=="2");then try {
-							  input message: 'Apply Plan?', ok: 'Apply'
-							  apply = true
-							   } catch (err) {
-								  echo "Plan Discarded: ${env.JOB_NAME} - ${env.BUILD_NUMBER} ()"
-								  apply = false
-								  currentBuild.result = 'UNSTABLE'
-							  }
-					  }
-					'''
-			   }
+				script {
+					withCredentials([[
+						$class: 'AmazonWebServicesCredentialsBinding',
+						credentialsId: 'fd4fa4b1-1e70-43de-b796-e13753ecd881',
+						accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+						secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+					]])
+					env.exitCode = sh(returnStatus:true, script:'ls!:')
+					if  (env.exitCode == '127') {
+						echo "out: ${env.exitCode}"
+						currentBuild.result = 'FAILURE'
+						currentStage.result = 'FAILURE'
+					}
+				}
 			}
 		}
 		stage('Terraform Apply VPC') {
+			when {
+				equals expected: 0, actual: env.exitCode
+			}
 			steps {
 			withCredentials([[
 				$class: 'AmazonWebServicesCredentialsBinding',
@@ -116,6 +103,7 @@ pipeline {
 				secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
 			]])
 				{
+					echo "out: ${env.exitCode}"
 					sh '''
 					   env | sort -u
 					   aws sts get-caller-identity
@@ -123,8 +111,8 @@ pipeline {
 					   /usr/sbin/terraform --version
 					   /usr/sbin/terraform apply -detailed-exitcode -var-file=terraform.tfvars
 					'''
-			   }
-		} 	
-	}
-}
+				}
+			   } 	
+		}
+	}	
 }
