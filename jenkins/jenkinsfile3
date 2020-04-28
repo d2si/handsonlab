@@ -9,7 +9,7 @@ pipeline {
         terraformretruncode = "0"
     }
     stages {
-       stage('Create Packer AMI') {
+       stage('Checkout code repo') {
         steps {
             withCredentials([[
                 $class: 'AmazonWebServicesCredentialsBinding',
@@ -28,7 +28,7 @@ pipeline {
         } 
     }  
      
-    stage(‘Validate’) {
+    stage('Packer Validate') {
         steps {
         withCredentials([[
             $class: 'AmazonWebServicesCredentialsBinding',
@@ -47,7 +47,7 @@ pipeline {
         }
     }
 
-    stage(‘Build) {
+    stage('Packer Build') {
         steps {
         withCredentials([[
             $class: 'AmazonWebServicesCredentialsBinding',
@@ -60,74 +60,98 @@ pipeline {
                    env | sort -u
                    aws sts get-caller-identity
                    cd $WORKSPACE/handsonlab/packer
-                   packer build packer_nginx.json
+                   # packer build packer_nginx.json
                 '''
             }
         }
     }
-		stage('Terraform  Init VPC') {
-			steps {
-			withCredentials([[
-				$class: 'AmazonWebServicesCredentialsBinding',
-				credentialsId: 'fd4fa4b1-1e70-43de-b796-e13753ecd881',
-				accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-				secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-			]])
-				{
-					sh '''
-					   env | sort -u
-					   aws sts get-caller-identity
-					   cd $WORKSPACE/handsonlab/terraform/infra/vpc
-					   terraform --version
-					   terraform init
-					'''
-				}
+    stage('Terraform Init VPC') {
+    	steps {
+	withCredentials([[
+		$class: 'AmazonWebServicesCredentialsBinding',
+		credentialsId: 'fd4fa4b1-1e70-43de-b796-e13753ecd881',
+		accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+		secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+		]])
+		{
+			sh '''
+				env | sort -u
+				aws sts get-caller-identity
+				cd $WORKSPACE/handsonlab/terraform/infra/vpc
+				terraform --version
+				terraform init -input=false -force-copy
+			'''
 			}
+		    }
 		} 
-		stage('Terraform Plan VPC') {
-			steps {
-			withCredentials([[
-				$class: 'AmazonWebServicesCredentialsBinding',
-				credentialsId: 'fd4fa4b1-1e70-43de-b796-e13753ecd881',
-				accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-				secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-			]])
-				{
-					sh '''
-					   env | sort -u
-					   aws sts get-caller-identity
-					   cd $WORKSPACE/handsonlab/terraform/infra/vpc
-					   terraform --version
-					   # terraform plan -detailed-exitcode -var-file=terraform.tfvars
-					   terraform plan -detailed-exitcode -var-file=$WORKSPACE/handsonlab/terraform/variables/vpc.tfvars
-					   echo $terraformretruncode
-					'''
+      stage('Terraform Plan'){
+            steps {
+            withCredentials([[
+	    	$class: 'AmazonWebServicesCredentialsBinding',
+		credentialsId: 'fd4fa4b1-1e70-43de-b796-e13753ecd881',
+		accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+		secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+		]])
+		{
+			sh '''
+				env | sort -u
+				aws sts get-caller-identity
+				terraform --version
+			'''
+	
+                    script {
+                        env.CHANGES = sh (
+                            script:'''
+                            cd $WORKSPACE/handsonlab/terraform/infra/vpc
+                            terraform plan -out=tfplan -input=false -detailed-exitcode -var-file=$WORKSPACE/handsonlab/terraform/variables/vpc.tfvars
+                            ''' ,
+                            returnStdout: false , returnStatus: true
+                        )
+                        // Return Exit Code
+                        // 0 = Succeeded with empty diff (no changes)
+                        // 1 = Error
+                        // 2 = Succeeded with non-empty diff (changes present)
+                        // echo "Change Var: ${env.CHANGES}"
+                        if (env.CHANGES == '1'){
+                            sh "exit 1"
+                        } else if (env.CHANGES == '0') {
+                            echo 'NO CHANGES to apply!'
+                            env.APPROVE = false
+                        } else {
+                            echo 'CHANGES to apply!'
+                        }
+                     }
 				}
-			}
+            }
+            post {
+                success {
+                        archiveArtifacts artifacts: 'handsonlab/terraform/infra/vpc/tfplan'
+                }
+            }
+        }
+	stage('Terraform Apply VPC') {
+		when {
+			allOf {
+                    		expression { return CHANGES ==~ /2/ }
+			    }
 		}
-		stage('Terraform Apply VPC') {
-			when {
-				equals expected: 0, actual: terraformretruncode
-			}
-			steps {
-			withCredentials([[
+		steps {
+		withCredentials([[
 				$class: 'AmazonWebServicesCredentialsBinding',
 				credentialsId: 'fd4fa4b1-1e70-43de-b796-e13753ecd881',
 				accessKeyVariable: 'AWS_ACCESS_KEY_ID',
 				secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
 			]])
-				{
-					echo "out: ${env.exitCode}"
-					sh '''
-					   env | sort -u
-					   aws sts get-caller-identity
-					   cd $WORKSPACE/handsonlab/terraform/terraform/vpc
-					   terraform --version
-					   # terraform apply -detailed-exitcode -var-file=terraform.tfvars
-					   # terraform apply -detailed-exitcode -var-file=../variables/vpc.tfvars
-					'''
+			{
+				sh '''
+					env | sort -u
+					aws sts get-caller-identity
+					cd $WORKSPACE/handsonlab/terraform/infra/vpc
+					terraform --version
+					# terraform apply -detailed-exitcode -var-file=$WORKSPACE/handsonlab/terraform/variables/vpc.tfvars
+				'''
 				}
 			} 	
 		}
-  }
+    	}
 }
