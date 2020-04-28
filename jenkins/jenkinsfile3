@@ -1,0 +1,133 @@
+pipeline {
+    agent {
+        docker { 
+            image 'thatarchguy/terraform-packer:latest' 
+            args '-v $WORKSPACE/handsonlab:/opt/workspace'
+        }
+    }
+    environment {
+        terraformretruncode = "0"
+    }
+    stages {
+       stage('Create Packer AMI') {
+        steps {
+            withCredentials([[
+                $class: 'AmazonWebServicesCredentialsBinding',
+                credentialsId: 'fd4fa4b1-1e70-43de-b796-e13753ecd881',
+                accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+        ]]) {
+                sh '''
+                   env | sort -u
+                   aws sts get-caller-identity
+                   packer -machine-readable version
+                   if [ -d "handsonlab" ]; then rm -Rf handsonlab; fi
+                   git clone https://github.com/d2si/handsonlab.git && cd handsonlab/packer/
+                '''
+            }
+        } 
+    }  
+     
+    stage(‘Validate’) {
+        steps {
+        withCredentials([[
+            $class: 'AmazonWebServicesCredentialsBinding',
+            credentialsId: 'fd4fa4b1-1e70-43de-b796-e13753ecd881',
+            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+        ]])
+            {
+                sh '''
+                   env | sort -u
+                   aws sts get-caller-identity
+                   cd $WORKSPACE/handsonlab/packer
+                   packer validate packer_nginx.json
+                '''
+            }
+        }
+    }
+
+    stage(‘Build) {
+        steps {
+        withCredentials([[
+            $class: 'AmazonWebServicesCredentialsBinding',
+            credentialsId: 'fd4fa4b1-1e70-43de-b796-e13753ecd881',
+            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+        ]])
+            {
+                sh '''
+                   env | sort -u
+                   aws sts get-caller-identity
+                   cd $WORKSPACE/handsonlab/packer
+                   packer build packer_nginx.json
+                '''
+            }
+        }
+    }
+		stage('Terraform  Init VPC') {
+			steps {
+			withCredentials([[
+				$class: 'AmazonWebServicesCredentialsBinding',
+				credentialsId: 'fd4fa4b1-1e70-43de-b796-e13753ecd881',
+				accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+				secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+			]])
+				{
+					sh '''
+					   env | sort -u
+					   aws sts get-caller-identity
+					   cd $WORKSPACE/handsonlab/terraform/infra/vpc
+					   terraform --version
+					   terraform init
+					'''
+				}
+			}
+		} 
+		stage('Terraform Plan VPC') {
+			steps {
+			withCredentials([[
+				$class: 'AmazonWebServicesCredentialsBinding',
+				credentialsId: 'fd4fa4b1-1e70-43de-b796-e13753ecd881',
+				accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+				secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+			]])
+				{
+					sh '''
+					   env | sort -u
+					   aws sts get-caller-identity
+					   cd $WORKSPACE/handsonlab/terraform/infra/vpc
+					   terraform --version
+					   # terraform plan -detailed-exitcode -var-file=terraform.tfvars
+					   terraform plan -detailed-exitcode -var-file=$WORKSPACE/handsonlab/terraform/variables/vpc.tfvars
+					   echo $terraformretruncode
+					'''
+				}
+			}
+		}
+		stage('Terraform Apply VPC') {
+			when {
+				equals expected: 0, actual: terraformretruncode
+			}
+			steps {
+			withCredentials([[
+				$class: 'AmazonWebServicesCredentialsBinding',
+				credentialsId: 'fd4fa4b1-1e70-43de-b796-e13753ecd881',
+				accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+				secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+			]])
+				{
+					echo "out: ${env.exitCode}"
+					sh '''
+					   env | sort -u
+					   aws sts get-caller-identity
+					   cd $WORKSPACE/handsonlab/terraform/terraform/vpc
+					   terraform --version
+					   # terraform apply -detailed-exitcode -var-file=terraform.tfvars
+					   # terraform apply -detailed-exitcode -var-file=../variables/vpc.tfvars
+					'''
+				}
+			} 	
+		}
+  }
+}
