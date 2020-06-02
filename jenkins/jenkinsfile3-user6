@@ -148,7 +148,7 @@ pipeline {
 					aws sts get-caller-identity
 					cd $WORKSPACE/handsonlab/terraform/infra/vpc
 					terraform --version
-					terraform apply -detailed-exitcode -var-file=$WORKSPACE/handsonlab/terraform/variables/vpc-user6.tfvars
+					terraform apply -auto-approve -detailed-exitcode -var-file=$WORKSPACE/handsonlab/terraform/variables/vpc-user6.tfvars
 				'''
 				}
 			} 	
